@@ -1,0 +1,6 @@
+TOKEN = "1134630948:AAGJDk6F4vrDXNkI72AEFN42myTAKGfkrLw"
+ADMIN = 182694754
+STORAGE = 'database.db'
+STATES = 'states.json'
+
+
