@@ -1,5 +1,7 @@
-TOKEN = "1134630948:AAGJDk6F4vrDXNkI72AEFN42myTAKGfkrLw"
-ADMIN = 182694754
+import os
+
+TOKEN = os.environ.get('TOKEN') 
+ADMIN = int(os.environ.get('ADMIN')) 
 STORAGE = 'database.db'
 STATES = 'states.json'
 
