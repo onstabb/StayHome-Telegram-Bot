@@ -59,6 +59,30 @@ class Connector:
         self.conn = connect(storage, check_same_thread=False)
         self.cursor = self.conn.cursor()
 
+    def create_table(self):
+        with self.conn and lock:
+            self.cursor.execute("""CREATE TABLE IF NOT EXISTS \"users\" (
+	\"id\"	INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+	\"chat_id\"	INTEGER(12) NOT NULL UNIQUE,
+	\"name\"	VARCHAR(10) UNIQUE,
+	\"date\"	TIMESTAMP NOT NULL,
+	\"paper\"	INTEGER NOT NULL DEFAULT 0,
+	\"foods\"	INTEGER NOT NULL DEFAULT 0,
+	\"water\"	INTEGER NOT NULL DEFAULT 0,
+	\"medicines\"	INTEGER NOT NULL DEFAULT 0,
+	\"masks\"	INTEGER NOT NULL DEFAULT 0,
+	\"drugs\"	INTEGER NOT NULL DEFAULT 0,
+	\"hunger\"	INTEGER NOT NULL DEFAULT 100,
+	\"thirst\"	INTEGER NOT NULL DEFAULT 100,
+	\"health\"	INTEGER NOT NULL DEFAULT 100,
+	\"level\"	INTEGER NOT NULL DEFAULT 1,
+	\"exp\"	INTEGER NOT NULL DEFAULT 0,
+	\"drug\"	INTEGER NOT NULL DEFAULT 0,
+	\"ill\"	INTEGER NOT NULL DEFAULT 0,
+	\"exploring\"	INTEGER,
+	\"stayhome\"	INTEGER NOT NULL DEFAULT 0
+)""")
+
 
 class Global(Connector):
 
@@ -289,7 +313,7 @@ class Store(GameAbilities):
         with self.conn and lock:
             self.cursor.execute(
                 f'UPDATE users SET paper = paper+{prizes[0]}, foods = foods+{prizes[1]}, water = water+{prizes[2]}'
-                f', medicines = medicines+{prizes[3]}, masks = masks+{prizes[4]}, drugs = drugs+{prizes[5]}, '
+                f', medicines = medicines+{prizes[3]}, masks = masks+{prizes[4]}, drugs = drugs+{prizes[5]} '
                 f'WHERE chat_id = {chat_id}'
             )
             self.conn.commit()
@@ -318,4 +342,6 @@ DB = Statistics(config.STORAGE)
 db = States(config.STATES)
 
 if __name__ == '__main__':
+    DB.create_table()
     print(DB.top_storage())
+    
