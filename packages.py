@@ -1,13 +1,14 @@
+# -*- coding: utf-8 -*-
 from dbworker import DB, db
 from random import randint, random
-from config import ADMIN
 from pickle import dump, load
 
-prize_1 = (15, 1, 1, 1, 0, 0)
-prize_2 = (30, 1, 1, 1, 0, 0)
-prize_3 = (60, 3, 3, 3, 1, 0)
-prize_4 = (100, 5, 5, 5, 1, 1)
-prize_5 = (150, 10, 10, 8, 2, 2)
+prizes = {2: (15, 1, 1, 1, 0, 0),
+          3: (30, 1, 1, 1, 0, 0),
+          4: (60, 3, 3, 3, 1, 0),
+          5: (100, 5, 5, 5, 1, 1),
+          6: (150, 10, 10, 8, 2, 2),
+          }
 
 
 class Chances(object):
@@ -134,7 +135,9 @@ class LevelSys(Player):
 
     async def new_level(self):
         need_exp = await self.need_exp()
-        if self.experience  >= need_exp:
+        experience = DB.check_experience(self.id)
+        if experience >= need_exp:
+
             DB.upd_lvl(self.id, self.experience - need_exp)
             return '\n*Новый уровень\!* 🆙 '
         else:
@@ -312,28 +315,14 @@ class Store(LevelSys):
     async def try_luck(self, value, price=100):
         async def you_gave(chances):
             return f'_Ты получил:_\n`' \
-                   f'🧻{chances[0]} 🍖{chances[1]} 💧{chances[2]} 💉{chances[3]} 😷{chances[4]} 💊{chances[5]} ' \
-                   f'⭐️{chances[6]}\n`'
-
+                   f'🧻{chances[0]} 🍖{chances[1]} 💧{chances[2]} 💉{chances[3]} 😷{chances[4]} 💊{chances[5]}\n`'
         if self.paper >= price:
             DB.buy_luck_chance(self.id, price)
             if value == 1:
                 return f"*Номер 1*\n_Ты ничего не получил_"
-            elif value == 2:
-                DB.you_win(self.id, prize_1)
-                return f"*Номер 2*\n" + await you_gave(prize_1)
-            elif value == 3:
-                DB.you_win(self.id, prize_2)
-                return f"*Номер 3*\n" + await you_gave(prize_2)
-            elif value == 4:
-                DB.you_win(self.id, prize_3)
-                return f"*Номер 4*\n" + await you_gave(prize_3)
-            elif value == 5:
-                DB.you_win(self.id, prize_4)
-                return f"*Номер 5*\n" + await you_gave(prize_4)
-            elif value == 6:
-                DB.you_win(self.id, prize_5)
-                return f"*Номер 6*\n" + await you_gave(prize_5)
+            elif value > 1:
+                DB.you_win(self.id, prizes[value])
+                return f"*Номер {value}*\n" + await you_gave(prizes[value])
         else:
             return '_Не хватает бумаги для розыгрыша\!_'
 
@@ -356,8 +345,12 @@ class World:
             dump(stocks, f)
 
     async def show(self):
-        with open(self.file, 'rb') as f:
-            return load(f)
+        try:
+            with open(self.file, 'rb') as f:
+                return load(f)
+        except FileNotFoundError:
+            with open(self.file, 'wb') as f:
+                dump({'normal': 50, 'stocks': 50}, f)
 
     async def infection(self):
         percent = (DB.who_healthy_and_walk() + DB.who_ill_and_walk()*1.5) / (DB.show_users_count())
@@ -378,4 +371,5 @@ WORLD = World()
 CHANCES = Chances()
 
 if __name__ == '__main__':
-    print(DB.show_user_info(ADMIN))
+    pass
+
