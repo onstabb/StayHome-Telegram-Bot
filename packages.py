@@ -329,6 +329,8 @@ class Store(LevelSys):
 
 class World:
 
+    startpoint = {'normal': 50, 'stocks': 50}
+
     async def stocks(self): return DB.show_users_count() * randint(50, 100)
 
     def __init__(self, file='situation.world'):
@@ -350,7 +352,8 @@ class World:
                 return load(f)
         except FileNotFoundError:
             with open(self.file, 'wb') as f:
-                dump({'normal': 50, 'stocks': 50}, f)
+                dump(self.startpoint, f)
+                return self.startpoint
 
     async def infection(self):
         percent = (DB.who_healthy_and_walk() + DB.who_ill_and_walk()*1.5) / (DB.show_users_count())
