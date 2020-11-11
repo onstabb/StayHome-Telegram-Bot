@@ -64,7 +64,7 @@ class Connector:
             self.cursor.execute("""CREATE TABLE IF NOT EXISTS \"users\" (
 	\"id\"	INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
 	\"chat_id\"	INTEGER(12) NOT NULL UNIQUE,
-	\"name\"	VARCHAR(10) UNIQUE,
+	\"name\"	VARCHAR(10) NOT NULL UNIQUE,
 	\"date\"	TIMESTAMP NOT NULL,
 	\"paper\"	INTEGER NOT NULL DEFAULT 0,
 	\"foods\"	INTEGER NOT NULL DEFAULT 0,
@@ -82,9 +82,12 @@ class Connector:
 	\"exploring\"	INTEGER,
 	\"stayhome\"	INTEGER NOT NULL DEFAULT 0
 )""")
+            self.conn.commit()
 
 
 class Global(Connector):
+
+    unreg_name = ""
 
     def select(self, what, where='1=1'):
         return f'SELECT {what} FROM users WHERE {where}'
@@ -97,8 +100,8 @@ class Global(Connector):
 
     def add(self, chat_id, date):
         with self.conn and lock:
-            self.cursor.execute('INSERT INTO users(chat_id, date, paper, foods, water, medicines, masks, drugs) '
-                                'VALUES(?, ?, ?, ?, ?, ?, ?, ?)', (chat_id, date, 5, 5, 5, 5, 2, 1))
+            self.cursor.execute('INSERT INTO users(chat_id, name, date, paper, foods, water, medicines, masks, drugs) '
+                                'VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?)', (chat_id, self.unreg_name, date, 5, 5, 5, 5, 2, 1))
             self.conn.commit()
 
     def registered(self, chat_id, name):
@@ -344,4 +347,3 @@ db = States(config.STATES)
 if __name__ == '__main__':
     DB.create_table()
     print(DB.top_storage())
-    

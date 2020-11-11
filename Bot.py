@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 from aiogram import Bot, Dispatcher, executor, types
 import config
 from dbworker import DB, db
@@ -12,50 +13,6 @@ scheduler = AsyncIOScheduler()
 
 bot = Bot(token=config.TOKEN, parse_mode='markdownv2')
 dp = Dispatcher(bot)
-
-
-async def time_eat_and_drink():
-    hungry = DB.hunger_and_thirsted()
-    max_mes = 30-1
-    if hungry:
-        for i in enumerate(hungry):
-            if i[1].count(0) == 2:
-                await bot.send_message(i[1][0], 'Ты голоден и хочешь пить\! Используй еду и воду из хранилища\.')
-
-            elif i[1][1] == 0:
-                await bot.send_message(i[1][0], 'Ты проголодался\! Используй еду из своего хранилища, пока не замучал голод\.')
-
-            elif i[1][2] == 0:
-                await bot.send_message(i[1][0], 'Ты хочешь пить\! Выпей воды из своего хранилища, пока не замучала жажда\.')
-
-            if i[0] == max_mes:
-                max_mes += 30
-                await sleep(1)
-    dead = tuple(DB.dead())
-    if dead:
-        for i in dead:
-            await bot.send_message(i, '*Здоровье обнулилось до нуля\!*\nПонижен уровень, отнято по 100 с каждого запаса '
-                                      'хранилища\.')
-
-
-async def time_flow():
-    messages = 0
-    max_mes = 30
-    time_is_now = DB.time_flow()
-    if time_is_now:
-        for user in time_is_now:
-            exp_end = packages.Exploring(user[0])
-            messages += 1
-            await bot.send_message(user[0], await exp_end.end(), reply_markup=await KEY.inl_back(cb='home'))
-            if messages == max_mes:
-                max_mes += 30
-                await sleep(1)
-#
-#
-scheduler.add_job(time_flow, 'cron', minute='*')
-scheduler.add_job(time_eat_and_drink, 'cron', minute='15, 30, 45, 0')
-scheduler.add_job(packages.WORLD.stocks_everyday, trigger='cron', day='*')
-scheduler.start()
 
 
 @dp.message_handler(commands=['start'])
@@ -81,7 +38,7 @@ async def start(message: types.Message):
             await message.answer(f'Привет, {name}\!', reply_markup=await KEY.main())
 
 
-@dp.message_handler(lambda message: DB.return_name(message.chat.id) is None)
+@dp.message_handler(lambda message: DB.return_name(message.chat.id) == DB.unreg_name)
 async def registration(message: types.Message):
     if message.text.isalnum() is False or (4 >= len(message.text) > 12):
         await message.answer('Такой никнейм не пойдет\.')
@@ -235,6 +192,60 @@ async def lucky_dice(message):
 
 async def begin(*args):
     await bot.send_message(config.ADMIN, 'Запустился\!')
+
+
+async def time_eat_and_drink():
+    """
+    Эта функция предназначена отсчитывания очков голода и жажды для всех игроков, для отправки уведомлений
+    о голоде и жажде, а так же для проверки смерти игроков.
+    Ограничение для отправки сообщений в Telegram - 30 сообщений в секунду.
+    :return:
+    """
+    hungry = DB.hunger_and_thirsted()
+    max_mes = 30-1
+    if hungry:
+        for i in enumerate(hungry):
+            if i[1].count(0) == 2:
+                await bot.send_message(i[1][0], 'Ты голоден и хочешь пить\! Используй еду и воду из хранилища\.')
+
+            elif i[1][1] == 0:
+                await bot.send_message(i[1][0], 'Ты проголодался\! Используй еду из своего хранилища, пока не замучал голод\.')
+
+            elif i[1][2] == 0:
+                await bot.send_message(i[1][0], 'Ты хочешь пить\! Выпей воды из своего хранилища, пока не замучала жажда\.')
+            if i[0] == max_mes:
+                max_mes += 30
+                await sleep(1)
+
+    dead = tuple(DB.dead())
+    if dead:
+        for i in dead:
+            await bot.send_message(i, '*Здоровье обнулилось до нуля\!*\nПонижен уровень, отнято по 100 с каждого запаса '
+                                      'хранилища\.')
+
+
+async def time_flow():
+    """
+    Эта функция предназначена для отсчитывания время на прогулке.
+    :return:
+    """
+    messages = 0
+    max_mes = 30
+    time_is_now = DB.time_flow()
+    if time_is_now:
+        for user in time_is_now:
+            exp_end = packages.Exploring(user[0])
+            messages += 1
+            await bot.send_message(user[0], await exp_end.end(), reply_markup=await KEY.inl_back(cb='home'))
+            if messages == max_mes:
+                max_mes += 30
+                await sleep(1)
+
+# Запускаем игровое время
+scheduler.add_job(time_flow, 'cron', minute='*')
+scheduler.add_job(time_eat_and_drink, 'cron', minute='15, 30, 45, 0')
+scheduler.add_job(packages.WORLD.stocks_everyday, trigger='cron', day='*')
+scheduler.start()
 
 
 if __name__ == '__main__':
